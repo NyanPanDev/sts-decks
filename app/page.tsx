@@ -14,12 +14,20 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("All");
   const [showUpgraded, setShowUpgraded] = useState<boolean>(false);
+  const [isDeckbuildingEnabled, setIsDeckbuildingEnabled] = useState<boolean>(false);
   const [selectedTier, setSelectedTier] = useState<string>("All");
 
   const [customDeck, setCustomDeck] = useState<(StsCard & { deckInstanceId: string; isUpgradedInDeck: boolean })[]>([]);
   const [deckName, setDeckName] = useState<string>("My Deck");
 
   const addCardToDeck = (card: StsCard) => {
+    const lockedCharacterCard = customDeck.find((c) => c.character !== "Colorless");
+    const lockedClass = lockedCharacterCard ? lockedCharacterCard.character : null;
+
+    if (lockedClass && card.character !== "Colorless" && card.character !== lockedClass) {
+      alert(`You cannot add cards from ${card.character} because your deck is locked to ${lockedClass}.`);
+      return;
+    }
     const newCardInstance = {
       ...card,
       deckInstanceId: crypto.randomUUID(),
@@ -241,17 +249,31 @@ export default function Home() {
                       ))}
                     </div>
 
-                    <label className="flex items-center gap-2 cursor-pointer select-none text-zinc-400 hover:text-zinc-200">
-                      <input
-                        type="checkbox"
-                        checked={showUpgraded}
-                        onChange={(e) => setShowUpgraded(e.target.checked)}
-                        className="accent-amber-500 h-4 w-4 rounded bg-zinc-900 border-zinc-800"
-                      />
-                      <span className={`font-semibold transition ${showUpgraded ? "text-amber-400" : ""}`}>
-                        Show Upgraded (+) Versions
-                      </span>
-                    </label>
+                    <div className="flex items-center gap-6">
+                      <label className="flex items-center gap-2 cursor-pointer select-none text-zinc-400 hover:text-zinc-200">
+                        <input
+                          type="checkbox"
+                          checked={showUpgraded}
+                          onChange={(e) => setShowUpgraded(e.target.checked)}
+                          className="accent-amber-500 h-4 w-4 rounded bg-zinc-900 border-zinc-800"
+                        />
+                        <span className={`font-semibold transition ${showUpgraded ? "text-amber-400" : ""}`}>
+                          Show Upgraded (+)
+                        </span>
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer select-none text-zinc-400 hover:text-zinc-200">
+                        <input
+                          type="checkbox"
+                          checked={isDeckbuildingEnabled}
+                          onChange={(e) => setIsDeckbuildingEnabled(e.target.checked)}
+                          className="accent-purple-500 h-4 w-4 rounded bg-zinc-900 border-zinc-800"
+                        />
+                        <span className={`font-semibold transition ${isDeckbuildingEnabled ? "text-purple-400" : ""}`}>
+                          Enable Deckbuilding
+                        </span>
+                      </label>
+                    </div>
                   </>
                 ) : (
                   <div className="flex items-center gap-2 text-zinc-400">
@@ -284,15 +306,31 @@ export default function Home() {
                             sizes="(max-w-640px) 50vw, 20vw"
                             className="object-contain p-2 group-hover:scale-102 transition duration-300"
                           />
-                          
+                          {isDeckbuildingEnabled && (
                           <div className="absolute inset-0 bg-zinc-950/70 opacity-0 group-hover:opacity-100 transition duration-150 flex flex-col items-center justify-center p-4 text-center space-y-2">
-                            <button
+                            {(() => {
+                              const lockedCharacterCard = customDeck.find((c) => c.character !== "Colorless");
+                              const lockedClass = lockedCharacterCard ? lockedCharacterCard.character : null;
+                              const isForbidden = lockedClass && card.character !== "Colorless" && card.character !== lockedClass;
+
+                              if (isForbidden) {
+                                return (
+                                  <div className="text-red-400 text-[10px] font-bold uppercase tracking-wide">
+                                    Cannot add {card.character} cards to a {lockedClass} deck.
+                                  </div>
+                                );
+                              }
+                              return (
+                                <button
                               onClick={() => addCardToDeck(card)}
                               className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs px-4 py-2 rounded-lg shadow-md transition transform active:scale-95"
                             >
                               Add to Custom Deck
                             </button>
+                              )
+                            })()}
                           </div>
+                          )}
                         </div>
 
                         <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
@@ -350,12 +388,11 @@ export default function Home() {
           <div className="flex-1 flex flex-col h-full overflow-hidden">
             <header className="border-b border-zinc-900 bg-zinc-950/80 p-6 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
-                <div className="text-[10px] text-amber-400 font-mono tracking-widest uppercase font-bold">Workspace Deck Sandbox</div>
                 <input
                   type="text"
                   value={deckName}
                   onChange={(e) => setDeckName(e.target.value)}
-                  className="bg-transparent text-lg font-bold text-zinc-100 border-b border-transparent hover:border-zinc-800 focus:border-zinc-600 focus:outline-none transition pb-0.5"
+                  className="bg-transparent text-lg font-bold text-zinc-100 border border-transparent hover:border-zinc-800 focus:border-zinc-600 focus:outline-none transition pb-0.5"
                 />
               </div>
 
@@ -372,7 +409,13 @@ export default function Home() {
                   disabled={customDeck.length === 0}
                   className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 text-zinc-950 font-bold text-xs px-5 py-2 rounded-lg shadow-md transition"
                 >
-                  Export Matrix
+                  Export Deck
+                </button>
+                <button
+                  onClick={() => { alert("Deck imported from local compilation engine state!"); }}
+                  className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-zinc-950 font-bold text-xs px-5 py-2 rounded-lg shadow-md transition"
+                >
+                  Import Custom Deck
                 </button>
               </div>
             </header>
@@ -439,6 +482,13 @@ export default function Home() {
                             >
                               DELETE
                             </button>
+                            <button
+                              onClick={() => addCardToDeck(card)}
+                              className="bg-zinc-950/80 hover:bg-zinc-900 text-zinc-400 text-[10px] font-mono px-1.5 py-1 rounded border border-zinc-800/50 font-bold transition shadow"
+                              title="View card details"
+                            >
+                              +
+                            </button>
                           </div>
                         </div>
 
@@ -454,7 +504,7 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="text-center py-24 border border-dashed border-zinc-900 rounded-2xl">
-                    <p className="text-zinc-500 text-sm">Your inventory is completely empty.</p>
+                    <p className="text-zinc-500 text-sm">Your deck is completely empty.</p>
                     <button
                       onClick={() => setActiveMenu("database")}
                       className="mt-3 text-xs font-bold text-amber-400 hover:text-amber-300 transition underline underline-offset-4"
