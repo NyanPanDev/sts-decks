@@ -8,7 +8,7 @@ import { STS_RELICS, StsRelic } from "./data/relics";
 const CHARACTERS = ["All", "Ironclad", "Silent", "Defect", "Watcher", "Colorless"] as const;
 
 export default function Home() {
-  const [activeMenu, setActiveMenu] = useState<"database" | "deckbuilder">("database");
+  const [activeMenu, setActiveMenu] = useState<"main" | "database" | "deckbuilder">("main");
   const [viewMode, setViewMode] = useState<"cards" | "relics">("cards");
   const [selectedChar, setSelectedChar] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -123,8 +123,10 @@ export default function Home() {
       <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between shrink-0 h-full z-30">
         <div>
           <div className="p-6 border-b border-zinc-800/60">
-            <h1 className="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-purple-400 uppercase">
-              STS Database
+            <h1 
+              onClick={() => setActiveMenu("main")}
+              className="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-purple-400 uppercase">
+                STS Database
             </h1>
             <p className="text-[10px] text-zinc-500 font-mono tracking-widest mt-0.5">V1.0</p>
           </div>
@@ -171,10 +173,25 @@ export default function Home() {
           </div>
         </div>
       </aside>
-
-      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
-        
-        {activeMenu === "database" ? (
+      <div className="flex-1 flex flex-col h-full">
+      <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+        {activeMenu === "main" && (
+          <div 
+            style = {{ backgroundImage: "url('/resources/sts1/background.webp')" }}
+            className="flex-1 flex flex-col items-center justify-center gap-6 text-center px-6">
+            <h2 className="text-2xl font-bold text-zinc-100 tracking-wide">Welcome to the STS Database & Deckbuilder</h2>
+            <p className="text-sm text-zinc-400 max-w-md">
+              Explore the complete database of cards and relics from Slay the Spire, and build your own custom decks with ease. Use the navigation on the left to get started.
+            </p>
+            <button
+              onClick={() => setActiveMenu("database")}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-zinc-950 font-bold text-sm px-6 py-3 rounded-lg shadow-md transition"
+            >
+              Go to Database
+            </button>
+          </div>
+        )}
+        {activeMenu === "database" && (
           <>
             <header className="border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md px-6 py-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-6">
@@ -182,7 +199,6 @@ export default function Home() {
                   <h2 className="text-base font-bold text-zinc-200 uppercase tracking-wide">Card/Relic Database</h2>
                 </div>
                 
-                {/* Secondary Cards vs Relics Sub-Navigation Tabs */}
                 <nav className="flex bg-zinc-900 p-1 rounded-lg border border-zinc-800 text-xs font-semibold">
                   <button
                     onClick={() => { setViewMode("cards"); setSearchQuery(""); }}
@@ -384,7 +400,8 @@ export default function Home() {
               )}
             </div>
           </>
-        ) : (
+        )}
+        { activeMenu === "deckbuilder" && (
           <div className="flex-1 flex flex-col h-full overflow-hidden">
             <header className="border-b border-zinc-900 bg-zinc-950/80 p-6 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
@@ -462,7 +479,6 @@ export default function Home() {
                             className="object-contain p-2"
                           />
                           
-                          {/* Floating Instance Interactive Management Dashboard controls */}
                           <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition duration-150">
                             <button
                               onClick={() => toggleCardUpgradeInDeck(card.deckInstanceId)}
@@ -519,7 +535,23 @@ export default function Home() {
           </div>
         )}
         
+      </main>
+      <footer className="w-full border-t border-zinc-900 bg-zinc-950/60 backdrop-blur-md py-4 px-6 mt-auto">
+      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] font-mono text-zinc-500">
+        
+        {/* Left Side: Versioning & Copyright */}
+        <div className="flex items-center gap-2">
+          <span>© STS Database. All rights reserved.</span>
+        </div>
+
+        {/* Center: Legal Attributions Disclaimer */}
+        <div className="text-center sm:text-right text-zinc-600 max-w-md leading-normal">
+          Disclaimer: All game assets, images, and trademarks are property of their respective owners. This site is not affiliated with or endorsed by Mega Crit.
+        </div>
+        
       </div>
+    </footer>
+    </div>
     </div>
   );
 }
