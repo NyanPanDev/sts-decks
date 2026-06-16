@@ -22,16 +22,11 @@ export default function Home() {
   const [selectedTier, setSelectedTier] = useState<string>("All");
 
   const [customDeck, setCustomDeck] = useState<(StsCard & { deckInstanceId: string; isUpgradedInDeck: boolean })[]>([]);
+  const [customRelic, setCustomRelic] = useState<any[]>([]);
   const [deckName, setDeckName] = useState<string>("My Deck");
 
   const addCardToDeck = (card: StsCard) => {
-    const lockedCharacterCard = customDeck.find((c) => c.character !== "Colorless");
-    const lockedClass = lockedCharacterCard ? lockedCharacterCard.character : null;
 
-    if (lockedClass && card.character !== "Colorless" && card.character !== lockedClass) {
-      alert(`You cannot add cards from ${card.character} because your deck is locked to ${lockedClass}.`);
-      return;
-    }
     const newCardInstance = {
       ...card,
       deckInstanceId: crypto.randomUUID(),
@@ -40,8 +35,21 @@ export default function Home() {
     setCustomDeck((prevDeck) => [...prevDeck, newCardInstance]);
   };
 
+  const addRelicToDeck = (relic: any) => {
+    if (customRelic.some((r) => r.id === relic.id)) {
+      alert(`You already have the relic "${relic.name}" in your deck.`);
+      return;
+    }
+
+    setCustomRelic((prevRelics) => [...prevRelics, relic]);
+  };
+
   const removeCardFromDeck = (deckInstanceId: string) => {
     setCustomDeck((prevDeck) => prevDeck.filter((card) => card.deckInstanceId !== deckInstanceId));
+  };
+
+  const removeRelicFromDeck = (relicId: string) => {
+    setCustomRelic((prevRelics) => prevRelics.filter((relic) => relic.id !== relicId));
   };
 
   const toggleCardUpgradeInDeck = (deckInstanceId: string) => {
@@ -57,6 +65,7 @@ export default function Home() {
   const clearDeck = () => {
     if (confirm("Are you sure you want to clear the deck? This action cannot be undone.")) {
       setCustomDeck([]);
+      setCustomRelic([]);
     }
   };
 
@@ -422,19 +431,60 @@ export default function Home() {
               ) : (
                 filteredRelics.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {filteredRelics.map((relic) => (
-                      <div key={relic.id} className="flex flex-col bg-zinc-900/30 border border-zinc-900 hover:border-zinc-800 rounded-xl p-4 shadow-md transition duration-200 items-center text-center justify-between space-y-3 group">
-                        <div className="relative w-16 h-16 bg-zinc-950 rounded-lg border border-zinc-800/60 flex items-center justify-center p-2">
-                          <Image src={getRelicImagePath(relic)} alt={relic.name} fill sizes="64px" className="object-contain p-1.5" />
-                        </div>
-                        <div className="space-y-1 w-full">
-                          <h3 className="font-bold text-xs text-zinc-200 tracking-wide line-clamp-1">{relic.name}</h3>
-                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-zinc-950 font-semibold border border-zinc-800/40 text-zinc-400">{relic.tier}</span>
-                          <p className="text-[11px] text-zinc-400 leading-normal pt-2 line-clamp-3 group-hover:line-clamp-none">{relic.description}</p>
-                        </div>
-                        <div className="text-[8px] tracking-widest uppercase font-bold text-zinc-600 pt-1 w-full text-right">{relic.character}</div>
+                  {filteredRelics.map((relic) => {
+                    const isAlreadyEquipped = customRelic.some((r) => r.id === relic.id);
+
+                    return (
+                    <div key={relic.id} className="flex flex-col bg-zinc-900/30 border border-zinc-900 hover:border-zinc-800 rounded-xl p-4 shadow-md transition duration-200 items-center text-center justify-between space-y-3 group relative overflow-hidden">
+                      <div className="relative w-16 h-16 bg-zinc-950 rounded-lg border border-zinc-800/60 flex items-center justify-center p-2">
+                        <Image src={getRelicImagePath(relic)} alt={relic.name} fill sizes="64px" className="object-contain p-1.5" />
                       </div>
-                    ))}
+            
+                      <div className="space-y-1 w-full">
+                        <h3 className="font-bold text-xs text-zinc-200 tracking-wide line-clamp-1">{relic.name}</h3>
+                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-zinc-950 font-semibold border border-zinc-800/40 text-zinc-400">{relic.tier}</span>
+                        <p className="text-[11px] text-zinc-400 leading-normal pt-2 line-clamp-3 group-hover:line-clamp-none">{relic.description}</p>
+                      </div>
+            
+                      <div className="text-[8px] tracking-widest uppercase font-bold text-zinc-600 pt-1 w-full text-right">{relic.character}</div>
+
+                      {isDeckbuildingEnabled && (
+                        <div className="absolute inset-0 bg-zinc-950/80 opacity-0 group-hover:opacity-100 transition duration-150 flex flex-col items-center justify-center p-4 text-center z-10">
+                          {(() => {
+                            if (isAlreadyEquipped) {
+                              return (
+                              <span className="text-zinc-500 font-mono text-[10px] font-bold uppercase tracking-wider bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
+                                Equipped
+                              </span>
+                              );
+                            }
+
+                            const lockedCharacterCard = customDeck.find((c) => c.character !== "Colorless");
+                            const lockedClass = lockedCharacterCard ? lockedCharacterCard.character : null;
+                            const isForbidden = lockedClass && relic.character !== "Shared" && relic.character !== lockedClass;
+                            if (isForbidden) {
+                              return (
+                              <div className="text-red-400 text-[10px] font-bold uppercase tracking-wide px-2">
+                                Requires {relic.character}
+                              </div>
+                              );
+                            }
+
+                            return (
+                            <button
+                              onClick={() => addRelicToDeck(relic)}
+                              className="bg-purple-600 hover:bg-purple-500 text-white font-bold font-mono text-[10px] uppercase tracking-wide px-3 py-2 rounded-lg shadow-md transition transform active:scale-95"
+                              >
+                              Equip Relic
+                            </button>
+                            );
+                    })()}
+              </div>
+            )}
+
+          </div>
+        );
+      })}
                   </div>
                 ) : (
                   <div className="text-center py-20 border border-dashed border-zinc-900 rounded-2xl text-zinc-500 text-sm">No relics matched your filter.</div>
@@ -505,6 +555,40 @@ export default function Home() {
 
               <div>
                 <h3 className="text-xs font-bold font-mono text-zinc-400 uppercase tracking-widest mb-4">Deck</h3>
+
+                <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 mt-6">
+                  <div className="text-[10px] text-purple-400 font-mono uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <span>Equipped Relics</span>
+                    {customRelic.length > 0 && (
+                      <span className="bg-purple-500/20 text-purple-400 font-mono text-[10px] px-2 py-0.5 rounded-full font-bold border border-purple-500/30">
+                        {customRelic.length}
+                        </span>
+                    )}
+                  </div>
+                  {customRelic.length > 0 ? (
+                    <div className="flex flex-wrap gap-3">
+                      {customRelic.map((relic) => (
+                        <div key={relic.id} className="flex items-center gap-2 bg-zinc-900/30 border border-zinc-900 rounded-lg p-2 shadow-md transition">
+                          <div className="relative w-10 h-10 bg-zinc-950 rounded-lg border border-zinc-800/60 flex items-center justify-center p-1">
+                            <Image src={getRelicImagePath(relic)} alt={relic.name} fill sizes="40px" className="object-contain p-1.5" />
+                          </div>
+                          <span className="text-[11px] font-semibold text-zinc-200">{relic.name}</span>
+                          <button
+                            onClick={() => removeRelicFromDeck(relic.id)}
+                            className="ml-auto text-red-400 hover:text-red-300 text-[10px] font-mono px-2 py-1 rounded border border-red-900/50 font-bold transition shadow"
+                            title="Remove relic from deck build"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-zinc-600 italic font-mono py-2">
+                      No relics equipped. Equip relics from the Database to enhance your deck.
+                    </div>
+                  )}
+                </div>
                 
                 {customDeck.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-10 gap-4">
