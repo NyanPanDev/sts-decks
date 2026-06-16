@@ -1,7 +1,7 @@
 export interface StsRelic {
   id: string;
   name: string;
-  tier: "Starter" | "Common" | "Uncommon" | "Rare" | "Boss" | "Shop" | "Event";
+  tier: "Starter" | "Common" | "Uncommon" | "Rare" | "Boss" | "Shop" | "Event" | "Blight";
   character: "Shared" | "Ironclad" | "Silent" | "Defect" | "Watcher";
   description: string;
 }
