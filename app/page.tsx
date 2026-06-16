@@ -81,12 +81,14 @@ export default function Home() {
     const prefix = getFilePrefix(card.character);
     const baseName = card.name.replace(/[\s\_]/g, "");
     const suffix = upgraded ? "Plus" : "";
-    return `/resources/sts1/cards/card_images/${prefix}${baseName}${suffix}.png`;
+    const basePath = process.env.NODE_ENV === 'production' ? '/sts-decks' : '';
+    return `${basePath}/resources/sts1/cards/card_images/${prefix}${baseName}${suffix}.png`;
   };
 
   const getRelicImagePath = (relic: StsRelic) => {
     const baseName = relic.name.replace(/[\s\-_']/g, "");
-    return `/resources/sts1/relics/relic_images/${baseName}.png`;
+    const basePath = process.env.NODE_ENV === 'production' ? '/sts-decks' : '';
+    return `${basePath}/resources/sts1/relics/relic_images/${baseName}.png`;
   }
 
   const filteredCards = STS_CARDS.filter((card) => {
@@ -177,11 +179,11 @@ export default function Home() {
       <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
         {activeMenu === "main" && (
           <div 
-            style = {{ backgroundImage: "url('/resources/sts1/background.webp')" }}
+            style = {{ backgroundImage: `url('${process.env.NODE_ENV === "production" ? "/sts-decks" : ""}/resources/sts1/background.webp')` }}
             className="flex-1 flex flex-col items-center justify-center gap-6 text-center px-6">
             <h2 className="text-2xl font-bold text-zinc-100 tracking-wide">Welcome to the STS Database & Deckbuilder</h2>
             <p className="text-sm text-zinc-400 max-w-md">
-              Explore the complete database of cards and relics from Slay the Spire, and build your own custom decks with ease. Use the navigation on the left to get started.
+              Explore the complete database of cards and relics from Slay the Spire, and build your own custom decks.
             </p>
             <button
               onClick={() => setActiveMenu("database")}
