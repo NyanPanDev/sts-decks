@@ -1,9 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
 import Image from "next/image";
 import { STS_CARDS, StsCard } from "./data/cards";
 import { STS_RELICS, StsRelic } from "./data/relics";
+
+import { exportDeckToString } from "./service/export";
+import { importDeckFromString } from "./service/import";
 
 const CHARACTERS = ["All", "Ironclad", "Silent", "Defect", "Watcher", "Colorless"] as const;
 
@@ -55,6 +59,42 @@ export default function Home() {
       setCustomDeck([]);
     }
   };
+
+  const handleExportDeck = () => {
+    // In case button is not greyed out for some reason
+    if (customDeck.length === 0) {
+      alert("Your deck is empty. Please add cards before exporting.");
+    }
+    const serializedCode = exportDeckToString(customDeck);
+
+    if (serializedCode) {
+      navigator.clipboard.writeText(serializedCode)
+        .then(() => {
+          alert("Deck code copied to clipboard!");
+        })
+        .catch((err) => {
+          console.error("Failed to copy deck code to clipboard:", err);
+          alert("Failed to copy deck code. Please try again.");
+        });
+      }
+  };
+
+  const handleImportDeck = () => {
+   const customStringPrompt = prompt("Paste your deck code here:");
+   if (!customStringPrompt || customStringPrompt.trim() === "") return;
+
+    try {
+      const importedDeck = importDeckFromString(customStringPrompt, STS_CARDS, showUpgraded) as any[];
+      if (importedDeck.length === 0) {
+        alert("No valid cards were found in the provided deck code.");
+      } else {
+        setCustomDeck(importedDeck);
+        alert(`Successfully imported ${importedDeck.length} cards into your deck!`);
+      }
+    } catch (error) {
+      alert("Failed to import deck. Please check the deck code and try again.");
+    }
+  }
 
   const attackCounter = customDeck.filter((card) => card.type === "Attack").length;
   const skillCounter = customDeck.filter((card) => card.type === "Skill").length;
@@ -424,14 +464,14 @@ export default function Home() {
                   Clear Deck
                 </button>
                 <button
-                  onClick={() => { alert("Deck saved locally inside compilation engine state!"); }}
+                  onClick={ handleExportDeck }
                   disabled={customDeck.length === 0}
                   className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 text-zinc-950 font-bold text-xs px-5 py-2 rounded-lg shadow-md transition"
                 >
                   Export Deck
                 </button>
                 <button
-                  onClick={() => { alert("Deck imported from local compilation engine state!"); }}
+                  onClick={ handleImportDeck }
                   className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-zinc-950 font-bold text-xs px-5 py-2 rounded-lg shadow-md transition"
                 >
                   Import Custom Deck
