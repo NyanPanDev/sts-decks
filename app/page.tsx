@@ -6,7 +6,7 @@ import Image from "next/image";
 import { STS_CARDS, StsCard } from "./data/cards";
 import { STS_RELICS, StsRelic } from "./data/relics";
 
-import { exportDeckToString, DeckItem } from "./service/export";
+import { exportDeckToString } from "./service/export";
 import { importDeckFromString } from "./service/import";
 
 const CHARACTERS = ["All", "Ironclad", "Silent", "Defect", "Watcher", "Colorless"] as const;
@@ -21,7 +21,7 @@ export default function Home() {
   const [isDeckbuildingEnabled, setIsDeckbuildingEnabled] = useState<boolean>(false);
   const [selectedTier, setSelectedTier] = useState<string>("All");
 
-  const [customDeck, setCustomDeck] = useState<DeckItem[]>([]);
+  const [customDeck, setCustomDeck] = useState<(StsCard & { deckInstanceId: string; isUpgradedInDeck: boolean })[]>([]);
   const [customRelic, setCustomRelic] = useState<any[]>([]);
   const [deckName, setDeckName] = useState<string>("My Deck");
 
@@ -97,7 +97,7 @@ export default function Home() {
       if (cards.length === 0) {
         alert("No valid cards were found in the provided deck code.");
       } else {
-        setCustomDeck(cards);
+        setCustomDeck(cards as any[]);
         setCustomRelic(relics);
         alert(`Successfully imported ${cards.length} cards into your deck!`);
       }
