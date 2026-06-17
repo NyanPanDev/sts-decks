@@ -6,7 +6,7 @@ import Image from "next/image";
 import { STS_CARDS, StsCard } from "./data/cards";
 import { STS_RELICS, StsRelic } from "./data/relics";
 
-import { exportDeckToString } from "./service/export";
+import { exportDeckToString, DeckItem } from "./service/export";
 import { importDeckFromString } from "./service/import";
 
 const CHARACTERS = ["All", "Ironclad", "Silent", "Defect", "Watcher", "Colorless"] as const;
@@ -21,7 +21,7 @@ export default function Home() {
   const [isDeckbuildingEnabled, setIsDeckbuildingEnabled] = useState<boolean>(false);
   const [selectedTier, setSelectedTier] = useState<string>("All");
 
-  const [customDeck, setCustomDeck] = useState<(StsCard & { deckInstanceId: string; isUpgradedInDeck: boolean })[]>([]);
+  const [customDeck, setCustomDeck] = useState<DeckItem[]>([]);
   const [customRelic, setCustomRelic] = useState<any[]>([]);
   const [deckName, setDeckName] = useState<string>("My Deck");
 
@@ -74,7 +74,7 @@ export default function Home() {
     if (customDeck.length === 0) {
       alert("Your deck is empty. Please add cards before exporting.");
     }
-    const serializedCode = exportDeckToString(customDeck);
+    const serializedCode = exportDeckToString(customDeck, customRelic);
 
     if (serializedCode) {
       navigator.clipboard.writeText(serializedCode)
@@ -93,12 +93,13 @@ export default function Home() {
    if (!customStringPrompt || customStringPrompt.trim() === "") return;
 
     try {
-      const importedDeck = importDeckFromString(customStringPrompt, STS_CARDS, showUpgraded) as any[];
-      if (importedDeck.length === 0) {
+      const { cards, relics } = importDeckFromString(customStringPrompt, STS_CARDS as any[], STS_RELICS as any[]);
+      if (cards.length === 0) {
         alert("No valid cards were found in the provided deck code.");
       } else {
-        setCustomDeck(importedDeck);
-        alert(`Successfully imported ${importedDeck.length} cards into your deck!`);
+        setCustomDeck(cards);
+        setCustomRelic(relics);
+        alert(`Successfully imported ${cards.length} cards into your deck!`);
       }
     } catch (error) {
       alert("Failed to import deck. Please check the deck code and try again.");
@@ -108,13 +109,6 @@ export default function Home() {
   const attackCounter = customDeck.filter((card) => card.type === "Attack").length;
   const skillCounter = customDeck.filter((card) => card.type === "Skill").length;
   const powerCounter = customDeck.filter((card) => card.type === "Power").length;
-
-  const costDistribution = customDeck.reduce((acc, card) => {
-    const costInt = parseInt(card.cost);
-    const costKey = isNaN(costInt) ? (card.cost === "X" ? "X" : "0") : card.cost;
-    acc[costKey] = (acc[costKey] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
 
   const getFilePrefix = (character: string) => {
     switch (character) {
